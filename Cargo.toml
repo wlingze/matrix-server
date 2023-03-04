@@ -9,3 +9,5 @@ edition = "2021"
 tokio = { version = "1.25.0", features = ["full"] }
 figment = { version = "0.10", features = ["toml", "env"] }
 serde = { version = "1.0.152", features = ["derive"] }
+axum-server = "0.4.6"
+axum = "0.6.10"
