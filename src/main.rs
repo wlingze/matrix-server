@@ -1,5 +1,6 @@
 mod api;
 mod config;
+mod utility;
 
 use std::{io, net::SocketAddr};
 
