@@ -1,46 +1,36 @@
 mod api;
 mod config;
+mod service;
+mod utility;
 
 use std::{io, net::SocketAddr};
 
 use axum::{routing::get, Router};
 use axum_server::{bind, Handle};
-use config::Config;
-use figment::{
-    providers::{Env, Format, Toml},
-    Figment,
-};
+use service::{init_service, services};
 
 #[tokio::main]
 async fn main() {
-    let raw_config = Figment::new()
-        .merge(
-            Toml::file(
-                Env::var("MATRIX_CONFIG")
-                    .expect("The MATRIX_CONFIG env var needs to be set. Example: /etc/matrix.toml"),
-            )
-            .nested(),
-        )
-        .merge(Env::prefixed("MATRIX_").global());
+    let config = config::parse();
 
-    let config = match raw_config.extract::<Config>() {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("it look like your config is invaild: {}", e);
-            std::process::exit(-1);
-        }
+    // set config to service
+    if let Err(e) = init_service(config) {
+        eprintln!("It looks like your config is invalid: {}", e);
+        std::process::exit(-1);
     };
 
-    // use it config
-    println!("{}", config);
+    // start web server
     let start = async {
-        run_server(config).await.unwrap();
+        run_server().await.unwrap();
     };
-
     start.await;
 }
 
-async fn run_server(config: Config) -> io::Result<()> {
+async fn run_server() -> io::Result<()> {
+    // get config from service
+    let config = &services().config;
+
+    // start web server
     let addr = SocketAddr::from((config.address, config.port));
     let hander = Handle::new();
     let app = routes().into_make_service();
