@@ -33,3 +33,38 @@ impl Services {
         Ok(Self { config })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::net::Ipv4Addr;
+
+    use crate::{
+        config::Config,
+        service::{init_service, services},
+    };
+
+    #[test]
+    fn test_global_services() {
+        println!("test ");
+        let config = Config {
+            address: Ipv4Addr::LOCALHOST.into(),
+            port: 8000,
+        };
+
+        // set services
+        match init_service(config.clone()) {
+            Ok(_) => {}
+            Err(e) => {
+                panic!("{}", e)
+            }
+        };
+
+        // get services
+        let service_config = &services().config;
+
+        // check address
+        assert_eq!(config.address, service_config.address);
+        // check port
+        assert_eq!(config.port, service_config.port);
+    }
+}

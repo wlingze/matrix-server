@@ -28,7 +28,7 @@ pub fn parse() -> Config {
     }
 }
 // this struct containing config data
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     #[serde(default = "default_address")]
     pub address: IpAddr,
@@ -58,4 +58,54 @@ fn default_address() -> IpAddr {
 
 fn default_port() -> u16 {
     8000
+}
+
+#[cfg(test)]
+mod test {
+    use std::net::Ipv4Addr;
+
+    use figment::{
+        providers::{Env, Format, Toml},
+        Figment,
+    };
+
+    use crate::config::{default_address, default_port, Config};
+
+    #[test]
+    fn test_config_parse() {
+        let config_file_name = "Test.toml";
+        let figment = || {
+            Figment::new()
+                .merge(Toml::file(config_file_name))
+                .merge(Env::prefixed("MATRIX_").global())
+        };
+
+        figment::Jail::expect_with(|jail| {
+            // check default
+            let test: Config = figment().extract()?;
+            assert_eq!(test.address, default_address());
+            assert_eq!(test.port, default_port());
+
+            // check toml file
+            jail.create_file(
+                config_file_name,
+                r#"
+                port = 1234
+                address = "127.1.1.1"
+                "#,
+            )?;
+            let test: Config = figment().extract()?;
+            assert_eq!(test.port, 1234);
+            assert_eq!(test.address, Ipv4Addr::from([127, 1, 1, 1]));
+
+            // check environment
+            jail.set_env("MATRIX_ADDRESS", "127.2.2.2");
+            jail.set_env("MATRIX_PORT", "2345");
+            let test: Config = figment().extract()?;
+            assert_eq!(test.port, 2345);
+            assert_eq!(test.address, Ipv4Addr::from([127, 2, 2, 2]));
+
+            Ok(())
+        })
+    }
 }
