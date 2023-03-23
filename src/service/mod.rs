@@ -1,15 +1,23 @@
 // service mod
-// provide database and global info
+// this is intermediate abstraction layer for whole project.
+// serivce module provide base functionality to api module.
+// service module declare trait, database module will impletment these trait.
 
+// sub-module
+mod global;
+mod services;
+
+// this code provide global access function.
 use crate::config::Config;
+use crate::database::build_database;
 use crate::utility::error::Result;
 use std::sync::RwLock;
 
 // this is global control, use global instense and rwlock
-pub static SERVICES: RwLock<Option<&Services>> = RwLock::new(None);
+pub static SERVICES: RwLock<Option<&services::Services>> = RwLock::new(None);
 
 // read, get global SERVICES
-pub fn services() -> &'static Services {
+pub fn services() -> &'static services::Services {
     SERVICES
         .read()
         .unwrap()
@@ -18,22 +26,12 @@ pub fn services() -> &'static Services {
 
 // write, build Services instense and wirte to SERVICES
 pub fn init_service(config: Config) -> Result<()> {
-    let services_raw = Box::new(Services::build(config)?);
+    let db = build_database(config.clone())?;
+    let services_raw = Box::new(services::Services::build(config, db)?);
     *SERVICES.write().unwrap() = Some(Box::leak(services_raw));
     Ok(())
 }
-
-pub struct Services {
-    pub config: Config,
-}
-
-impl Services {
-    // build a Services instance
-    fn build(config: Config) -> Result<Self> {
-        Ok(Self { config })
-    }
-}
-
+// test
 #[cfg(test)]
 mod test {
     use std::net::Ipv4Addr;
@@ -52,15 +50,12 @@ mod test {
         };
 
         // set services
-        match init_service(config.clone()) {
-            Ok(_) => {}
-            Err(e) => {
-                panic!("{}", e)
-            }
-        };
+        if let Err(e) = init_service(config.clone()) {
+            panic!("{}", e);
+        }
 
         // get services
-        let service_config = &services().config;
+        let service_config = &services().global.config;
 
         // check address
         assert_eq!(config.address, service_config.address);

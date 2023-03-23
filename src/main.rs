@@ -1,5 +1,6 @@
 mod api;
 mod config;
+mod database;
 mod service;
 mod utility;
 
@@ -28,7 +29,7 @@ async fn main() {
 
 async fn run_server() -> io::Result<()> {
     // get config from service
-    let config = &services().config;
+    let config = &services().global.config;
 
     // start web server
     let addr = SocketAddr::from((config.address, config.port));
