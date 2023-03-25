@@ -30,10 +30,17 @@ pub fn parse() -> Config {
 // this struct containing config data
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
+    // http server address
     #[serde(default = "default_address")]
     pub address: IpAddr,
     #[serde(default = "default_port")]
     pub port: u16,
+
+    // database
+    #[serde(default = "default_database_backend")]
+    pub database_backend: String,
+    #[serde(default = "default_database_path")]
+    pub database_path: String,
 }
 
 impl fmt::Display for Config {
@@ -41,6 +48,8 @@ impl fmt::Display for Config {
         let lines = [
             ("Server address", self.address.to_string()),
             ("Server port", self.port.to_string()),
+            ("Database backend", self.database_backend.to_string()),
+            ("Database path", self.database_path.to_string()),
         ];
 
         let mut msg = "".to_string();
@@ -60,6 +69,13 @@ fn default_port() -> u16 {
     8000
 }
 
+fn default_database_backend() -> String {
+    "sqlite".to_string()
+}
+fn default_database_path() -> String {
+    "".to_string()
+}
+
 #[cfg(test)]
 mod test {
     use std::net::Ipv4Addr;
@@ -69,7 +85,7 @@ mod test {
         Figment,
     };
 
-    use crate::config::{default_address, default_port, Config};
+    use crate::config::{default_address, default_database_backend, default_port, Config};
 
     #[test]
     fn test_config_parse() {
@@ -82,29 +98,44 @@ mod test {
 
         figment::Jail::expect_with(|jail| {
             // check default
-            let test: Config = figment().extract()?;
-            assert_eq!(test.address, default_address());
-            assert_eq!(test.port, default_port());
+            {
+                let test: Config = figment().extract()?;
+                assert_eq!(test.address, default_address());
+                assert_eq!(test.port, default_port());
+                assert_eq!(test.database_backend, default_database_backend());
+                assert_eq!(test.database_path, "".to_string());
+            }
 
             // check toml file
-            jail.create_file(
-                config_file_name,
-                r#"
+            {
+                jail.create_file(
+                    config_file_name,
+                    r#"
                 port = 1234
                 address = "127.1.1.1"
+                database_backend = "sqlite1"
+                database_path = "/tmp"
                 "#,
-            )?;
-            let test: Config = figment().extract()?;
-            assert_eq!(test.port, 1234);
-            assert_eq!(test.address, Ipv4Addr::from([127, 1, 1, 1]));
+                )?;
+                let test: Config = figment().extract()?;
+                assert_eq!(test.port, 1234);
+                assert_eq!(test.address, Ipv4Addr::from([127, 1, 1, 1]));
+                assert_eq!(test.database_backend, "sqlite1".to_string());
+                assert_eq!(test.database_path, "/tmp".to_string());
+            }
 
             // check environment
-            jail.set_env("MATRIX_ADDRESS", "127.2.2.2");
-            jail.set_env("MATRIX_PORT", "2345");
-            let test: Config = figment().extract()?;
-            assert_eq!(test.port, 2345);
-            assert_eq!(test.address, Ipv4Addr::from([127, 2, 2, 2]));
-
+            {
+                jail.set_env("MATRIX_ADDRESS", "127.2.2.2");
+                jail.set_env("MATRIX_PORT", "2345");
+                jail.set_env("MATRIX_DATABASE_BACKEND", "sqlite2");
+                jail.set_env("MATRIX_DATABASE_PATH", "/tmp2");
+                let test: Config = figment().extract()?;
+                assert_eq!(test.port, 2345);
+                assert_eq!(test.address, Ipv4Addr::from([127, 2, 2, 2]));
+                assert_eq!(test.database_backend, "sqlite2".to_string());
+                assert_eq!(test.database_path, "/tmp2".to_string());
+            }
             Ok(())
         })
     }

@@ -26,7 +26,8 @@ pub fn services() -> &'static services::Services {
 
 // write, build Services instense and wirte to SERVICES
 pub fn init_service(config: Config) -> Result<()> {
-    let db = build_database(config.clone())?;
+    let db_raw = build_database(config.clone())?;
+    let db = Box::leak(db_raw);
     let services_raw = Box::new(services::Services::build(config, db)?);
     *SERVICES.write().unwrap() = Some(Box::leak(services_raw));
     Ok(())
@@ -43,23 +44,26 @@ mod test {
 
     #[test]
     fn test_global_services() {
-        println!("test ");
         let config = Config {
             address: Ipv4Addr::LOCALHOST.into(),
             port: 8000,
+            database_backend: "sqlite".to_string(),
+            database_path: "/tmp".to_string(),
         };
 
         // set services
         if let Err(e) = init_service(config.clone()) {
             panic!("{}", e);
         }
+        // test global
+        {
+            // get services
+            let service_config = &services().global.config;
 
-        // get services
-        let service_config = &services().global.config;
-
-        // check address
-        assert_eq!(config.address, service_config.address);
-        // check port
-        assert_eq!(config.port, service_config.port);
+            // check address
+            assert_eq!(config.address, service_config.address);
+            // check port
+            assert_eq!(config.port, service_config.port);
+        }
     }
 }
