@@ -6,6 +6,7 @@
 // sub-module
 mod global;
 mod services;
+pub mod user;
 
 // this code provide global access function.
 use crate::config::Config;

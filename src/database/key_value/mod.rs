@@ -1,3 +1,5 @@
+mod user;
+
 use crate::utility::error::Result;
 
 /// # key-value
