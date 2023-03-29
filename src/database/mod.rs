@@ -1,7 +1,7 @@
 mod engine;
 mod key_value;
 
-use std::path::Path;
+use std::sync::Arc;
 
 use crate::{
     config::Config,
@@ -31,9 +31,8 @@ pub fn build_database(config: Config) -> Result<Box<Database>> {
 }
 
 pub struct Database {
-    // todo
     // user
-    pub user: Box<dyn KV>,
+    pub user: Arc<dyn KV>,
 }
 
 impl Handler for Database {}
