@@ -36,21 +36,15 @@ pub fn init_service(config: Config) -> Result<()> {
 // test
 #[cfg(test)]
 mod test {
-    use std::net::Ipv4Addr;
 
     use crate::{
-        config::Config,
+        config::default,
         service::{init_service, services},
     };
 
     #[test]
     fn test_global_services() {
-        let config = Config {
-            address: Ipv4Addr::LOCALHOST.into(),
-            port: 8000,
-            database_backend: "sqlite".to_string(),
-            database_path: "/tmp".to_string(),
-        };
+        let config = default();
 
         // set services
         if let Err(e) = init_service(config.clone()) {

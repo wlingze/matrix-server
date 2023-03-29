@@ -61,6 +61,15 @@ impl fmt::Display for Config {
     }
 }
 
+pub fn default() -> Config {
+    Config {
+        address: default_address(),
+        port: default_port(),
+        database_backend: default_database_backend(),
+        database_path: default_database_path(),
+    }
+}
+
 fn default_address() -> IpAddr {
     Ipv4Addr::LOCALHOST.into()
 }
@@ -73,7 +82,7 @@ fn default_database_backend() -> String {
     "sqlite".to_string()
 }
 fn default_database_path() -> String {
-    "".to_string()
+    "/tmp/".to_string()
 }
 
 #[cfg(test)]
@@ -103,7 +112,7 @@ mod test {
                 assert_eq!(test.address, default_address());
                 assert_eq!(test.port, default_port());
                 assert_eq!(test.database_backend, default_database_backend());
-                assert_eq!(test.database_path, "".to_string());
+                assert_eq!(test.database_path, "/tmp/".to_string());
             }
 
             // check toml file
@@ -114,14 +123,14 @@ mod test {
                 port = 1234
                 address = "127.1.1.1"
                 database_backend = "sqlite1"
-                database_path = "/tmp"
+                database_path = "/tmp/1"
                 "#,
                 )?;
                 let test: Config = figment().extract()?;
                 assert_eq!(test.port, 1234);
                 assert_eq!(test.address, Ipv4Addr::from([127, 1, 1, 1]));
                 assert_eq!(test.database_backend, "sqlite1".to_string());
-                assert_eq!(test.database_path, "/tmp".to_string());
+                assert_eq!(test.database_path, "/tmp/1".to_string());
             }
 
             // check environment
@@ -129,12 +138,12 @@ mod test {
                 jail.set_env("MATRIX_ADDRESS", "127.2.2.2");
                 jail.set_env("MATRIX_PORT", "2345");
                 jail.set_env("MATRIX_DATABASE_BACKEND", "sqlite2");
-                jail.set_env("MATRIX_DATABASE_PATH", "/tmp2");
+                jail.set_env("MATRIX_DATABASE_PATH", "/tmp/2");
                 let test: Config = figment().extract()?;
                 assert_eq!(test.port, 2345);
                 assert_eq!(test.address, Ipv4Addr::from([127, 2, 2, 2]));
                 assert_eq!(test.database_backend, "sqlite2".to_string());
-                assert_eq!(test.database_path, "/tmp2".to_string());
+                assert_eq!(test.database_path, "/tmp/2".to_string());
             }
             Ok(())
         })
