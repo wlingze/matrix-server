@@ -28,9 +28,17 @@ pub fn services() -> &'static services::Services {
 
 // write, build Services instense and wirte to SERVICES
 pub fn init_service(config: Config) -> Result<()> {
-    let db_raw = build_database(config.clone())?;
-    let db = Box::leak(db_raw);
-    let services_raw = Box::new(services::Services::build(config, db)?);
+    let services_raw: Box<Services>;
+    #[cfg(not(test))]
+    {
+        let db_raw = build_database(config.clone())?;
+        let db = Box::leak(db_raw);
+        services_raw = Box::new(services::Services::build(config, db)?);
+    }
+    #[cfg(test)]
+    {
+        services_raw = Box::new(services::Services::build(config)?);
+    }
     *SERVICES.write().unwrap() = Some(Box::leak(services_raw));
     Ok(())
 }
