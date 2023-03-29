@@ -13,6 +13,8 @@ use crate::{
     utility::error::Result,
 };
 
+const DATABASE_FILE_NAME: &str = "conduit.db";
+
 pub struct Engine {
     connect: Mutex<Connection>,
     read_connect: ThreadLocal<Connection>,
@@ -40,7 +42,7 @@ impl Engine {
 
 impl DBEngine for Arc<Engine> {
     fn open(config: Config) -> Result<Self> {
-        let path = Path::new(&config.database_path).join("conduit.db");
+        let path = Path::new(&config.database_path).join(DATABASE_FILE_NAME);
         let connect = Mutex::new(Engine::pre_open(&path)?);
         Ok(Arc::new(Engine {
             connect,
@@ -112,18 +114,21 @@ impl KV for Table {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::remove_file, os};
+    use std::fs::{create_dir, remove_dir_all};
 
     use crate::config;
 
     use super::*;
     #[test]
-    fn sqlite_test() {
+    fn test_sqlite() {
         // Engine test
 
         // Engine open
         let mut conf = config::default();
-        conf.database_path = "/tmp/".to_string();
+        // set tmp dir
+        let tmp_dir = "/tmp/test_sqlite";
+        create_dir(tmp_dir).unwrap();
+        conf.database_path = tmp_dir.to_string();
 
         let engine = Arc::<Engine>::open(conf).unwrap();
         // Engine open_tree
@@ -154,7 +159,7 @@ mod tests {
             assert_eq!(table.get(key).unwrap(), None);
         }
 
-        // delete /tmp/conduit.db
-        remove_file("/tmp/conduit.db").unwrap();
+        // delete /tmp/1/conduit.db
+        remove_dir_all(tmp_dir).unwrap();
     }
 }

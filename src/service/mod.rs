@@ -13,8 +13,6 @@ use crate::database::build_database;
 use crate::utility::error::Result;
 use std::sync::RwLock;
 
-use self::services::Services;
-
 // this is global control, use global instense and rwlock
 pub static SERVICES: RwLock<Option<&services::Services>> = RwLock::new(None);
 
@@ -28,23 +26,17 @@ pub fn services() -> &'static services::Services {
 
 // write, build Services instense and wirte to SERVICES
 pub fn init_service(config: Config) -> Result<()> {
-    let services_raw: Box<Services>;
-    #[cfg(not(test))]
-    {
-        let db_raw = build_database(config.clone())?;
-        let db = Box::leak(db_raw);
-        services_raw = Box::new(services::Services::build(config, db)?);
-    }
-    #[cfg(test)]
-    {
-        services_raw = Box::new(services::Services::build(config)?);
-    }
+    let db_raw = build_database(config.clone())?;
+    let db = Box::leak(db_raw);
+    let services_raw = Box::new(services::Services::build(config, db)?);
     *SERVICES.write().unwrap() = Some(Box::leak(services_raw));
     Ok(())
 }
 // test
 #[cfg(test)]
 mod test {
+
+    use std::fs::{create_dir, remove_dir_all};
 
     use crate::{
         config::default,
@@ -53,7 +45,10 @@ mod test {
 
     #[test]
     fn test_global_services() {
-        let config = default();
+        let mut config = default();
+        let tmp_dir = "/tmp/test_services";
+        create_dir(tmp_dir).unwrap();
+        config.database_path = tmp_dir.to_string();
 
         // set services
         if let Err(e) = init_service(config.clone()) {
@@ -69,5 +64,8 @@ mod test {
             // check port
             assert_eq!(config.port, service_config.port);
         }
+
+        // delete /tmp/1/conduit.db
+        remove_dir_all(tmp_dir).unwrap();
     }
 }
