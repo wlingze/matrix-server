@@ -1,34 +1,160 @@
-use std::path::Path;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
-use rusqlite::Connection;
+use parking_lot::{Mutex, MutexGuard};
+use rusqlite::{Connection, DatabaseName::Main, OptionalExtension};
+use thread_local::ThreadLocal;
 
 use crate::{
     config::Config,
     database::{engine::DBEngine, key_value::KV},
-    utility::error::{Error, Result},
+    utility::error::Result,
 };
 
 pub struct Engine {
-    pub connect: Connection,
+    connect: Mutex<Connection>,
+    read_connect: ThreadLocal<Connection>,
+    path: PathBuf,
 }
 
-impl DBEngine for Engine {
-    fn open(config: Config) -> Result<Box<Self>> {
-        let path = Path::new(&config.database_path).join("conduit.db");
-        if !path.exists() {
-            return Err(Error::bad_config(
-                "Found sqlite at database_path, but is not specified in config.",
-            ));
-        }
-        let connect = Connection::open(path)?;
-        Ok(Box::new(Engine { connect }))
+impl Engine {
+    fn pre_open(path: &Path) -> Result<Connection> {
+        let con = Connection::open(path)?;
+        con.pragma_update(Some(Main), "page_size", 2048)?;
+        // con.pragma_update(Some(Main), "journal_mode", "WAL")?;
+        con.pragma_update(Some(Main), "synchronous", "NORMAL")?;
+        Ok(con)
     }
 
-    fn open_tree(&self, name: &str) -> Result<Box<dyn KV>> {
-        todo!()
+    fn write_lock(&self) -> MutexGuard<'_, Connection> {
+        self.connect.lock()
+    }
+
+    fn read_lock(&self) -> &Connection {
+        self.read_connect
+            .get_or(|| Engine::pre_open(&self.path).unwrap())
+    }
+}
+
+impl DBEngine for Arc<Engine> {
+    fn open(config: Config) -> Result<Self> {
+        let path = Path::new(&config.database_path).join("conduit.db");
+        let connect = Mutex::new(Engine::pre_open(&path)?);
+        Ok(Arc::new(Engine {
+            connect,
+            read_connect: ThreadLocal::new(),
+            path,
+        }))
+    }
+
+    fn open_tree(&self, name: &str) -> Result<Arc<dyn KV>> {
+        self.write_lock().execute(
+            format!(
+                "CREATE TABLE IF NOT EXISTS {} (
+                \"key\" BLOB PRIMARY KEY,
+                \"value\" BLOB NOT NULL
+            )",
+                name
+            )
+            .as_str(),
+            [],
+        )?;
+        Ok(Arc::new(Table {
+            engine: Arc::clone(self),
+            name: name.to_string(),
+        }))
     }
 
     fn flush(&self) -> Result<()> {
-        todo!()
+        // flush the database with rusqlite
+        self.write_lock().execute("VACUUM", [])?;
+        Ok(())
+    }
+}
+
+pub struct Table {
+    engine: Arc<Engine>,
+    name: String,
+}
+
+impl KV for Table {
+    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+        Ok(self
+            .engine
+            .read_lock()
+            .prepare(format!("SELECT value FROM {} WHERE key = ?", self.name).as_str())?
+            .query_row([key], |row| row.get(0))
+            .optional()?)
+    }
+
+    fn insert(&self, key: &[u8], value: &[u8]) -> Result<()> {
+        self.engine.write_lock().execute(
+            format!(
+                "INSERT OR REPLACE INTO {} (key, value) VALUES (?, ?)",
+                self.name
+            )
+            .as_str(),
+            [key, value],
+        )?;
+        Ok(())
+    }
+
+    fn remove(&self, key: &[u8]) -> Result<()> {
+        self.engine.write_lock().execute(
+            format!("DELETE FROM {} WHERE key = ?", self.name).as_str(),
+            [key],
+        )?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{fs::remove_file, os};
+
+    use crate::config;
+
+    use super::*;
+    #[test]
+    fn sqlite_test() {
+        // Engine test
+
+        // Engine open
+        let mut conf = config::default();
+        conf.database_path = "/tmp/".to_string();
+
+        let engine = Arc::<Engine>::open(conf).unwrap();
+        // Engine open_tree
+        let table = engine.open_tree("test_table").unwrap();
+
+        // Table test
+
+        let key = "test_key".as_bytes();
+        // Table get = None
+        {
+            assert_eq!(table.get(key).unwrap(), None);
+        }
+
+        // Table insert
+        {
+            table.insert(key, &[1]).unwrap();
+        }
+        // Table get = 1
+        {
+            let row = table.get(key).unwrap().unwrap();
+            assert_eq!(row.len(), 1);
+            assert_eq!(row[0], 1);
+        }
+        // Table remove
+        {
+            table.remove(key).unwrap();
+            // Table get = 0
+            assert_eq!(table.get(key).unwrap(), None);
+        }
+
+        // delete /tmp/conduit.db
+        remove_file("/tmp/conduit.db").unwrap();
     }
 }

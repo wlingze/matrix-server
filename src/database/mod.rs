@@ -19,7 +19,7 @@ pub fn build_database(config: Config) -> Result<Box<Database>> {
             return Err(Error::bad_config("sqlite is not enabled"));
 
             #[cfg(feature = "sqlite")]
-            engine::sqlite::Engine::open(config)?
+            Arc::<engine::sqlite::Engine>::open(config)?
         }
         &_ => return Err(Error::bad_config("Database backend not found.")),
     };
