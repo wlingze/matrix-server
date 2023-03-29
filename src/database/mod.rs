@@ -5,6 +5,7 @@ use std::path::Path;
 
 use crate::{
     config::Config,
+    service::services::Handler,
     utility::error::{Error, Result},
 };
 
@@ -34,3 +35,5 @@ pub struct Database {
     // user
     pub user: Box<dyn KV>,
 }
+
+impl Handler for Database {}

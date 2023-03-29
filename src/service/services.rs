@@ -1,21 +1,21 @@
 use crate::{config::Config, utility::error::Result};
 
-use crate::service::{global, user};
+use crate::service::user;
+
+pub trait Handler: user::Handler {}
+
 
 pub struct Services {
-    pub global: global::Services,
-    pub user: user::Services,
+    pub config: Config,
+    pub handler: &'static dyn Handler,
 }
 
 impl Services {
     // build a Services instance
     pub fn build<H>(config: Config, handler: &'static H) -> Result<Self>
     where
-        H: user::Handler + 'static,
+        H: Handler + 'static,
     {
-        Ok(Services {
-            global: global::Services::build(config),
-            user: user::Services { handler },
-        })
+        Ok(Services { config, handler })
     }
 }

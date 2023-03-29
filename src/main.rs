@@ -29,7 +29,7 @@ async fn main() {
 
 async fn run_server() -> io::Result<()> {
     // get config from service
-    let config = &services().global.config;
+    let config = &services().config;
 
     // start web server
     let addr = SocketAddr::from((config.address, config.port));

@@ -4,8 +4,7 @@
 // service module declare trait, database module will impletment these trait.
 
 // sub-module
-mod global;
-mod services;
+pub mod services;
 pub mod user;
 
 // this code provide global access function.
@@ -13,6 +12,8 @@ use crate::config::Config;
 use crate::database::build_database;
 use crate::utility::error::Result;
 use std::sync::RwLock;
+
+use self::services::Services;
 
 // this is global control, use global instense and rwlock
 pub static SERVICES: RwLock<Option<&services::Services>> = RwLock::new(None);
@@ -53,7 +54,7 @@ mod test {
         // test global
         {
             // get services
-            let service_config = &services().global.config;
+            let service_config = &services().config;
 
             // check address
             assert_eq!(config.address, service_config.address);
