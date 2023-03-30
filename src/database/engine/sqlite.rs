@@ -5,7 +5,6 @@ use std::{
 
 use parking_lot::{Mutex, MutexGuard};
 use rusqlite::{Connection, DatabaseName::Main, OptionalExtension};
-use thread_local::ThreadLocal;
 
 use crate::{
     config::Config,
@@ -17,7 +16,8 @@ const DATABASE_FILE_NAME: &str = "conduit.db";
 
 pub struct Engine {
     connect: Mutex<Connection>,
-    read_connect: ThreadLocal<Connection>,
+    // read_connect: ThreadLocal<Connection>,
+    read_connect: Mutex<Connection>,
     path: PathBuf,
 }
 
@@ -25,7 +25,6 @@ impl Engine {
     fn pre_open(path: &Path) -> Result<Connection> {
         let con = Connection::open(path)?;
         con.pragma_update(Some(Main), "page_size", 2048)?;
-        // con.pragma_update(Some(Main), "journal_mode", "WAL")?;
         con.pragma_update(Some(Main), "synchronous", "NORMAL")?;
         Ok(con)
     }
@@ -34,10 +33,14 @@ impl Engine {
         self.connect.lock()
     }
 
-    fn read_lock(&self) -> &Connection {
-        self.read_connect
-            .get_or(|| Engine::pre_open(&self.path).unwrap())
+    fn read_lock(&self) -> MutexGuard<'_, Connection> {
+        self.read_connect.lock()
     }
+
+    // fn read_lock(&self) -> &Connection {
+    //     self.read_connect
+    //         .get_or(|| Engine::pre_open(&self.path).unwrap())
+    // }
 }
 
 impl DBEngine for Arc<Engine> {
@@ -46,7 +49,8 @@ impl DBEngine for Arc<Engine> {
         let connect = Mutex::new(Engine::pre_open(&path)?);
         Ok(Arc::new(Engine {
             connect,
-            read_connect: ThreadLocal::new(),
+            read_connect: Mutex::new(Engine::pre_open(&path)?),
+            // read_connect: ThreadLocal::new(),
             path,
         }))
     }
@@ -89,7 +93,27 @@ impl KV for Table {
             .prepare(format!("SELECT value FROM {} WHERE key = ?", self.name).as_str())?
             .query_row([key], |row| row.get(0))
             .optional()?)
+        // {
+        //     Ok(value) => Ok(Some(value)),
+        //     Err(Error::QueryReturnedNoRows) => Ok(None),
+        //     Err(Error::SqliteFailure(
+        //         ffi::Error {
+        //             code,: SystemIoFailure
+        //             extended_code,
+        //         },
+        //         _,
+        //     )) => Ok(None),
+        //     Err(e) => Err(utility::error::Error::SqliteError { source: e }),
+        // }
     }
+
+    // fn optional(self) -> Result<Option<T>> {
+    //     match self {
+    //         Ok(value) => Ok(Some(value)),
+    //         Err(Error::QueryReturnedNoRows) => Ok(None),
+    //         Err(e) => Err(e),
+    //     }
+    // }
 
     fn insert(&self, key: &[u8], value: &[u8]) -> Result<()> {
         self.engine.write_lock().execute(

@@ -7,6 +7,9 @@ pub enum Error {
     #[error("{0}")]
     BadConfig(&'static str),
 
+    #[error("{0}")]
+    BadDatabase(&'static str),
+
     #[cfg(feature = "sqlite")]
     #[error("There was a problem with the connection to the sqlite database: {source}")]
     SqliteError {
@@ -18,5 +21,9 @@ pub enum Error {
 impl Error {
     pub fn bad_config(msg: &'static str) -> Self {
         Self::BadConfig(msg)
+    }
+
+    pub fn bad_database(msg: &'static str) -> Self {
+        Self::BadDatabase(msg)
     }
 }

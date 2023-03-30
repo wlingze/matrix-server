@@ -34,7 +34,7 @@ pub fn init_service(config: Config) -> Result<()> {
 }
 // test
 #[cfg(test)]
-mod test {
+pub mod test {
 
     use std::fs::{create_dir, remove_dir_all};
 
@@ -43,29 +43,38 @@ mod test {
         service::{init_service, services},
     };
 
-    #[test]
-    fn test_global_services() {
+    // setup services for other handler testcase
+    pub fn setup_services(suffix: &str) -> String {
         let mut config = default();
-        let tmp_dir = "/tmp/test_services";
-        create_dir(tmp_dir).unwrap();
-        config.database_path = tmp_dir.to_string();
-
+        let tmp_dir = format!("/tmp/{}", suffix);
+        create_dir(tmp_dir.clone()).map_err(|_| {
+            remove_dir_all(tmp_dir.clone()).unwrap();
+            create_dir(tmp_dir.clone()).unwrap()
+        });
+        config.database_path = tmp_dir.clone();
         // set services
         if let Err(e) = init_service(config.clone()) {
             panic!("{}", e);
         }
+        tmp_dir
+    }
+
+    #[test]
+    fn test_global_services() {
+        let tmp_dir = setup_services("test_services");
+
         // test global
         {
             // get services
             let service_config = &services().config;
-
+            let config = default();
             // check address
             assert_eq!(config.address, service_config.address);
             // check port
             assert_eq!(config.port, service_config.port);
         }
 
-        // delete /tmp/1/conduit.db
+        // delete
         remove_dir_all(tmp_dir).unwrap();
     }
 }

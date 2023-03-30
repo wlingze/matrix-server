@@ -26,13 +26,15 @@ pub fn build_database(config: Config) -> Result<Box<Database>> {
 
     // return
     Ok(Box::new(Database {
-        user: build.open_tree("user")?,
+        user_password: build.open_tree("user_password")?,
+        user_displayname: build.open_tree("user_displayname")?,
     }))
 }
 
 pub struct Database {
     // user
-    pub user: Arc<dyn KV>,
+    pub user_password: Arc<dyn KV>,
+    pub user_displayname: Arc<dyn KV>,
 }
 
 impl Handler for Database {}
