@@ -12,9 +12,15 @@ pub trait Handler: Send + Sync {
     // set password for the given user
     fn set_password(&self, user_id: &UserId, password: Option<&str>) -> Result<()>;
 
-    // displayname
-    // get user displayname for the given user
-    fn get_displayname(&self, user_id: &UserId) -> Result<Option<String>>;
-    // set user displayname for the given user
-    fn set_displayname(&self, user_id: &UserId, displayname: Option<&str>) -> Result<()>;
+    // // displayname
+    // // get user displayname for the given user
+    // fn get_displayname(&self, user_id: &UserId) -> Result<Option<String>>;
+    // // set user displayname for the given user
+    // fn set_displayname(&self, user_id: &UserId, displayname: Option<&str>) -> Result<()>;
+
+    // token
+    // set token-user in login
+    fn set_token(&self, user_id: &UserId) -> Result<String>;
+    // get user from token
+    fn from_token(&self, token: String) -> Result<Option<UserId>>;
 }

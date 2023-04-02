@@ -17,6 +17,7 @@ ruma = { version = "0.4.0", features = ["client-api"] }
 rusqlite ={ version="0.29.0", optional=true }
 parking_lot = "0.12"
 thread_local = "1.1.7"
+rand = "0.8.5"
 
 [features]
 default = ["sqlite"]
