@@ -1,12 +1,13 @@
+use ruma::api::client::error::ErrorKind;
 use ruma::UserId;
 
-use crate::utility;
 use crate::utility::error::Error;
+use crate::utility::{self, password_encode};
 use crate::{service::user::Handler, utility::error::Result};
 
 use crate::database::Database;
 
-const DEFAULT_PASSWORD: &[u8] = "".as_bytes();
+const DEFAULT_PASSWORD: &str = "";
 const TOKEN_LENGTH: usize = 32;
 
 impl Handler for Database {
@@ -28,10 +29,12 @@ impl Handler for Database {
 
     fn set_password(&self, user_id: &UserId, password: Option<&str>) -> Result<()> {
         let password = match password {
-            Some(password) => password.as_bytes(),
-            None => DEFAULT_PASSWORD,
+            Some(password) => password_encode(password)
+                .map_err(|_| Error::BadRequest(ErrorKind::InvalidParam, ""))?,
+            None => DEFAULT_PASSWORD.to_string(),
         };
-        self.user_password.insert(user_id.as_bytes(), password)?;
+        self.user_password
+            .insert(user_id.as_bytes(), password.as_bytes())?;
         Ok(())
     }
 
@@ -112,11 +115,12 @@ mod tests {
             .handler
             .set_password(&user, Some("password"))
             .unwrap();
-        // get displayname -> Some
-        assert_eq!(
-            services().handler.get_password(&user).unwrap(),
-            Some("password".to_string())
-        );
+        // check password
+        assert!(argon2::verify_encoded(
+            &services().handler.get_password(&user).unwrap().unwrap(),
+            "password".as_bytes()
+        )
+        .unwrap());
 
         // set token
         let token = services().handler.set_token(&user).unwrap();
