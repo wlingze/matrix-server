@@ -29,6 +29,9 @@ pub fn build_database(config: Config) -> Result<Box<Database>> {
         user_password: build.open_tree("user_password")?,
         token_user: build.open_tree("token_user")?,
         user_token: build.open_tree("user_token")?,
+        user_count: build.open_tree("user_count")?,
+        user_messageid: build.open_tree("user_messageid")?,
+        messageid_message: build.open_tree("messageid_message")?,
     }))
 }
 
@@ -37,6 +40,14 @@ pub struct Database {
     pub user_password: Arc<dyn KV>,
     pub token_user: Arc<dyn KV>,
     pub user_token: Arc<dyn KV>,
+
+    // message
+    // user_count
+    pub user_count: Arc<dyn KV>,
+    // {username}{count} - messageid
+    pub user_messageid: Arc<dyn KV>,
+    // messageid - message
+    pub messageid_message: Arc<dyn KV>,
 }
 
 impl Handler for Database {}

@@ -4,6 +4,7 @@
 // service module declare trait, database module will impletment these trait.
 
 // sub-module
+pub mod message;
 pub mod services;
 pub mod user;
 
@@ -75,6 +76,10 @@ pub mod test {
             test_user();
         }
 
+        // test message
+        {
+            test_message();
+        }
 
         // delete
         remove_dir_all(tmp_dir).unwrap();
