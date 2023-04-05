@@ -1,6 +1,3 @@
-use ruma::api::client::error::ErrorKind;
-use ruma::UserId;
-
 use crate::utility::error::Error;
 use crate::utility::{self, password_encode};
 use crate::{service::user::Handler, utility::error::Result};
@@ -11,11 +8,11 @@ const DEFAULT_PASSWORD: &str = "";
 const TOKEN_LENGTH: usize = 32;
 
 impl Handler for Database {
-    fn exists(&self, user_id: &UserId) -> Result<bool> {
+    fn exists(&self, user_id: &String) -> Result<bool> {
         Ok(self.user_password.get(user_id.as_bytes())?.is_some())
     }
 
-    fn get_password(&self, user_id: &UserId) -> Result<Option<String>> {
+    fn get_password(&self, user_id: &String) -> Result<Option<String>> {
         self.user_password
             .get(user_id.as_bytes())?
             .map_or(Ok(None), |bytes| {
@@ -27,10 +24,10 @@ impl Handler for Database {
             })
     }
 
-    fn set_password(&self, user_id: &UserId, password: Option<&str>) -> Result<()> {
+    fn set_password(&self, user_id: &String, password: Option<&str>) -> Result<()> {
         let password = match password {
             Some(password) => password_encode(password)
-                .map_err(|_| Error::BadRequest(ErrorKind::InvalidParam, ""))?,
+                .map_err(|_| Error::BadRequest("password is invalid unicode"))?,
             None => DEFAULT_PASSWORD.to_string(),
         };
         self.user_password
@@ -38,7 +35,7 @@ impl Handler for Database {
         Ok(())
     }
 
-    fn set_token(&self, user_id: &UserId) -> Result<String> {
+    fn set_token(&self, user_id: &String) -> Result<String> {
         // get old token  from user-token
         if let Some(token) = self.user_token.get(user_id.as_bytes())?.map_or(
             Ok::<Option<String>, Error>(None),
@@ -63,12 +60,12 @@ impl Handler for Database {
         Ok(token)
     }
 
-    fn from_token(&self, token: String) -> Result<Option<UserId>> {
+    fn from_token(&self, token: String) -> Result<Option<String>> {
         self.token_user
             .get(token.as_bytes())?
             .map_or(Ok(None), |bytes| {
                 Ok(Some(
-                    UserId::try_from(utility::string_from_bytes(bytes).map_err(|_| {
+                    String::try_from(utility::string_from_bytes(bytes).map_err(|_| {
                         Error::bad_database("User ID in token-user is invalid unicode.")
                     })?)
                     .map_err(|_| Error::bad_database("User ID in token-user is invalid userid."))?,
