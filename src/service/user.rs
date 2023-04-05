@@ -23,4 +23,64 @@ pub trait Handler: Send + Sync {
     fn from_token(&self, token: String) -> Result<Option<String>>;
 }
 
+#[cfg(test)]
+pub mod tests {
 
+    use crate::service::services;
+
+    // #[test]
+    pub fn test_user() {
+        // let tmp_dir = setup_services("test_user");
+        let user = "@carl:example.com".to_string();
+
+        // check user -> false
+        assert_eq!(services().handler.exists(&user).unwrap(), false);
+
+        // get password -> None
+        assert_eq!(services().handler.get_password(&user).unwrap(), None);
+
+        // // get displayname -> None
+        // assert_eq!(services().handler.get_displayname(&user).unwrap(), None);
+
+        // // set displayname
+        // services()
+        //     .handler
+        //     .set_displayname(&user, Some("carl"))
+        //     .unwrap();
+        // // get displayname -> Some
+        // assert_eq!(
+        //     services().handler.get_displayname(&user).unwrap(),
+        //     Some("carl".to_string())
+        // );
+
+        // set password
+        services()
+            .handler
+            .set_password(&user, Some("password"))
+            .unwrap();
+        // check password
+        assert!(argon2::verify_encoded(
+            &services().handler.get_password(&user).unwrap().unwrap(),
+            "password".as_bytes()
+        )
+        .unwrap());
+
+        // set token
+        let token = services().handler.set_token(&user).unwrap();
+        assert_eq!(
+            services().handler.from_token(token.clone()).unwrap(),
+            Some(user.clone())
+        );
+        // set new token
+        let new_token = services().handler.set_token(&user).unwrap();
+        assert_eq!(
+            services().handler.from_token(new_token).unwrap(),
+            Some(user.clone())
+        );
+        // remove old token
+        assert_eq!(services().handler.from_token(token.clone()).unwrap(), None);
+
+        // check user -> true
+        assert_eq!(services().handler.exists(&user).unwrap(), true);
+    }
+}

@@ -43,25 +43,21 @@ pub mod test {
         service::{init_service, services},
     };
 
-    // setup services for other handler testcase
-    pub fn setup_services(suffix: &str) -> String {
+    use super::{message::test::test_message, user::tests::test_user};
+
+    #[test]
+    fn test_global_services() {
         let mut config = default();
-        let tmp_dir = format!("/tmp/{}", suffix);
+        let tmp_dir = "/tmp/test_services";
         create_dir(tmp_dir.clone()).map_err(|_| {
             remove_dir_all(tmp_dir.clone()).unwrap();
             create_dir(tmp_dir.clone()).unwrap()
         });
-        config.database_path = tmp_dir.clone();
+        config.database_path = tmp_dir.to_string();
         // set services
         if let Err(e) = init_service(config.clone()) {
             panic!("{}", e);
         }
-        tmp_dir
-    }
-
-    #[test]
-    fn test_global_services() {
-        let tmp_dir = setup_services("test_services");
 
         // test global
         {
@@ -73,6 +69,12 @@ pub mod test {
             // check port
             assert_eq!(config.port, service_config.port);
         }
+
+        // test user
+        {
+            test_user();
+        }
+
 
         // delete
         remove_dir_all(tmp_dir).unwrap();
