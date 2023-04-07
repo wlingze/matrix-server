@@ -16,6 +16,7 @@ pub struct Message {
     pub send: String,
     pub recv: String,
     pub content: String,
+    pub timestamp: String,
 }
 
 impl Message {
@@ -45,6 +46,7 @@ pub mod test {
                 send: "user0".to_string(),
                 recv: "user1".to_string(),
                 content: "hello".to_string(),
+                timestamp: "1234".to_string(),
             };
             services()
                 .handler
@@ -77,6 +79,7 @@ pub mod test {
                 send: "user0".to_string(),
                 recv: "user1".to_string(),
                 content: "hello".to_string(),
+                timestamp: "111111".to_string(),
             };
             services()
                 .handler
@@ -87,6 +90,7 @@ pub mod test {
                 send: "user1".to_string(),
                 recv: "user0".to_string(),
                 content: "world".to_string(),
+                timestamp: "111112".to_string(),
             };
             services()
                 .handler
@@ -97,6 +101,7 @@ pub mod test {
                 send: "user2".to_string(),
                 recv: "user0".to_string(),
                 content: "hello".to_string(),
+                timestamp: "111113".to_string(),
             };
             services()
                 .handler
@@ -107,6 +112,7 @@ pub mod test {
                 send: "user1".to_string(),
                 recv: "user2".to_string(),
                 content: "world".to_string(),
+                timestamp: "111114".to_string(),
             };
             services()
                 .handler
