@@ -22,8 +22,10 @@ rust-argon2 = "1.0"
 bincode = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3"}
-tower-http = {version="0.4.0", features=["trace"]}
+# tower-http = {version="0.4.0", features=["trace"]}
+tower-http = { version = "0.4.0", features = ["cors", "compression-full", "sensitive-headers", "trace", "util"] }
 tower = { version = "0.4.8", features = ["util"] }
+axum-auth = "0.4"
 
 [features]
 default = ["sqlite"]

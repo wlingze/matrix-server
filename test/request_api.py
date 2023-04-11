@@ -30,20 +30,21 @@ def login(username, password):
 
 def send_message(token, send, recv, content):
     api = url + "/api/v0/send"
+    headers = {'Authorization': 'Bearer ' + token}
     response = requests.post(api, json={
-        "token": token, 
         "message": {
             "send": send, 
             "recv": recv, 
             "content": content, 
             "timestamp":str(int(time.time()))
-        }
-    })
+        } 
+    }, headers=headers)
     print("send status: {} result: {}".format(response.status_code, response.text))
 
 def recv_message(token, since):
     api = url + "/api/v0/recv"
-    response = requests.post(api, json={"token": token, "since": since})
+    headers = {'Authorization': 'Bearer ' + token}
+    response = requests.post(api, json={"since": since}, headers=headers)
     print("sync status: {} result: {}".format(response.status_code, response.text))
     if response.status_code == 200:
         return response.json()

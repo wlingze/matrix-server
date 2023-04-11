@@ -1,4 +1,5 @@
 use axum::Json;
+use axum_auth::AuthBearer;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -8,7 +9,6 @@ use crate::{
 
 #[derive(Deserialize)]
 pub struct Body {
-    token: String,
     since: String,
 }
 
@@ -21,13 +21,13 @@ pub struct Response {
 /// # `POST /api/v0/sync`
 ///
 ///  send message
-pub async fn recv(Json(body): Json<Body>) -> Result<Json<Response>> {
-    tracing::info!("token: {:?}, since: {:?}, ", body.token, body.since);
+pub async fn recv(AuthBearer(token): AuthBearer, Json(body): Json<Body>) -> Result<Json<Response>> {
+    tracing::info!("token: {:?}, since: {:?}, ", token, body.since);
 
     // parse UserId
     let user = services()
         .handler
-        .from_token(body.token)?
+        .from_token(token)?
         .ok_or(Error::BadRequest("Wrong token."))?;
     tracing::debug!("user: {:?}", user);
 

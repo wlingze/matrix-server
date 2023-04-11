@@ -8,14 +8,17 @@ use std::{io, net::SocketAddr};
 
 use axum::{
     extract::MatchedPath,
-    http,
+    http::{self, header, HeaderName, Method},
     routing::{get, post},
     Router,
 };
 use axum_server::{bind, Handle};
 use service::{init_service, services};
 use tower::ServiceBuilder;
-use tower_http::trace::TraceLayer;
+use tower_http::{
+    cors::{self, CorsLayer},
+    trace::TraceLayer,
+};
 
 #[tokio::main]
 async fn main() {
@@ -49,16 +52,32 @@ async fn run_server() -> io::Result<()> {
     let addr = SocketAddr::from((config.address, config.port));
     let hander = Handle::new();
 
-    let middleware = ServiceBuilder::new().layer(TraceLayer::new_for_http().make_span_with(
-        |request: &http::Request<_>| {
+    let x_requested_with = HeaderName::from_static("x-requested-with");
+
+    let middleware = ServiceBuilder::new()
+        .layer(
+            TraceLayer::new_for_http().make_span_with(|request: &http::Request<_>| {
             let path = if let Some(path) = request.extensions().get::<MatchedPath>() {
                 path.as_str()
             } else {
                 request.uri().path()
             };
             tracing::info_span!("http_request", %path)
-        },
-    ));
+            }),
+        )
+        .layer(
+            CorsLayer::new()
+                .allow_origin(cors::Any)
+                .allow_methods([Method::POST])
+                // .allow_headers([header::ORIGIN, header::ACCEPT, header::AUTHORIZATION]),
+                .allow_headers([
+                    header::ORIGIN,
+                    x_requested_with,
+                    header::CONTENT_TYPE,
+                    header::ACCEPT,
+                    header::AUTHORIZATION,
+                ]),
+        );
 
     let app = routes().layer(middleware).into_make_service();
     bind(addr).handle(hander).serve(app).await?;
