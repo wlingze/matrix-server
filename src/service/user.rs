@@ -4,6 +4,9 @@ pub trait Handler: Send + Sync {
     // check user exists
     fn exists(&self, user_id: &String) -> Result<bool>;
 
+    // get all users
+    fn users(&self) -> Result<Vec<String>>;
+
     // password
     // get password has for the given user
     fn get_password(&self, user_id: &String) -> Result<Option<String>>;
@@ -82,5 +85,10 @@ pub mod tests {
 
         // check user -> true
         assert_eq!(services().handler.exists(&user).unwrap(), true);
+
+        // get all user
+        let users = services().handler.users().unwrap();
+        assert_eq!(users.len(), 1);
+        assert_eq!(users[0], user);
     }
 }

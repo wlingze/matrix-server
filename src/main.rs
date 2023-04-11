@@ -57,12 +57,12 @@ async fn run_server() -> io::Result<()> {
     let middleware = ServiceBuilder::new()
         .layer(
             TraceLayer::new_for_http().make_span_with(|request: &http::Request<_>| {
-            let path = if let Some(path) = request.extensions().get::<MatchedPath>() {
-                path.as_str()
-            } else {
-                request.uri().path()
-            };
-            tracing::info_span!("http_request", %path)
+                let path = if let Some(path) = request.extensions().get::<MatchedPath>() {
+                    path.as_str()
+                } else {
+                    request.uri().path()
+                };
+                tracing::info_span!("http_request", %path)
             }),
         )
         .layer(
@@ -88,6 +88,7 @@ async fn run_server() -> io::Result<()> {
 fn routes() -> Router {
     Router::new()
         .route("/ping", get(api::ping))
+        .route("/api/v0/get_users", get(api::user::get_users))
         .route("/api/v0/register", post(api::register::register_route))
         .route("/api/v0/login", post(api::login::login_route))
         .route("/api/v0/send", post(api::send::send))

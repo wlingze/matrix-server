@@ -72,4 +72,12 @@ impl Handler for Database {
                 ))
             })
     }
+
+    fn users(&self) -> Result<Vec<String>> {
+        Ok(self
+            .user_password
+            .iter()
+            .map(|tuple| String::from_utf8(tuple.0.to_vec()).unwrap())
+            .collect())
+    }
 }

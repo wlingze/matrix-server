@@ -49,6 +49,13 @@ def recv_message(token, since):
     if response.status_code == 200:
         return response.json()
 
+def get_users(token):
+    api = url + "/api/v0/get_users"
+    headers = {'Authorization': 'Bearer ' + token}
+    response = requests.get(api, headers=headers)
+    print("users status: {} result: {}".format(response.status_code, response.text))
+    if response.status_code == 200:
+        return response.json()
 
 def test_http():
     ping()
@@ -84,11 +91,24 @@ def test_http():
     assert user0_messages[2]['content'] == "message1 ", "user0 get message content failed"
     assert user0_messages[3]['content'] == "message2 ", "user0 get message content failed"
 
+    # get all users
+    # from user0 token
+    users = get_users(user0_token)["users"]
+    assert len(users) == 2, "get all users number failed"
+    assert users[0] == user0, "get all users username failed"
+    assert users[1] == user1, "get all users username failed"
+    # from user1 token
+    users = get_users(user1_token)["users"]
+    assert len(users) == 2, "get all users number failed"
+    assert users[0] == user0, "get all users username failed"
+    assert users[1] == user1, "get all users username failed"
+
 
 
 
 def run_server(database_tmp_directory):
-    working_directory = "../"
+    # working_directory = "../"
+    working_directory = "."
 
     # build server 
     result = subprocess.run(["cargo", "build"], cwd=working_directory)
