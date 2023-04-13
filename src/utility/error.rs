@@ -1,4 +1,7 @@
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use thiserror::Error;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -33,12 +36,15 @@ impl Error {
 }
 
 impl IntoResponse for Error {
-    fn into_response(self) -> axum::response::Response {
-        tracing::error!("{:?}", self);
-        match self {
-            Error::BadRequest(_) => StatusCode::BAD_REQUEST,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-        .into_response()
+    fn into_response(self) -> Response {
+        tracing::info!("{:?}", self);
+        (
+            match self {
+                Error::BadRequest(_) => StatusCode::BAD_REQUEST,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            },
+            format!("{}", self),
+        )
+            .into_response()
     }
 }

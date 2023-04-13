@@ -68,7 +68,7 @@ async fn run_server() -> io::Result<()> {
         .layer(
             CorsLayer::new()
                 .allow_origin(cors::Any)
-                .allow_methods([Method::POST])
+                .allow_methods([Method::POST, Method::GET])
                 // .allow_headers([header::ORIGIN, header::ACCEPT, header::AUTHORIZATION]),
                 .allow_headers([
                     header::ORIGIN,
