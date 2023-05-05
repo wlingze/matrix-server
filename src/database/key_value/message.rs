@@ -29,8 +29,8 @@ impl Handler for Database {
             .insert(message.send.as_bytes(), &(send_count + 1).to_be_bytes())?;
 
         // update message
-        let sender = format!("{}{}", message.send, send_count);
-        let recver = format!("{}{}", message.recv, recv_count);
+        let sender = format!("{}{:06}", message.send, send_count);
+        let recver = format!("{}{:06}", message.recv, recv_count);
         // let messageid = format!("{}{}_{}{}", sender, send_count, recver, recv_count);
         let messageid = format!("{}_{}", sender, recver);
         self.messageid_message
@@ -48,7 +48,10 @@ impl Handler for Database {
     fn recv_message(&self, username: &str, since: &str) -> Result<Option<(Vec<Message>, String)>> {
         Ok(Some((
             self.user_messageid
-                .iter_form(username, since.as_bytes())
+                .iter_form(
+                    username,
+                    format!("{:06}", since.parse::<u128>().unwrap()).as_bytes(),
+                )
                 .map(|tuple| {
                     let messageid = tuple.1;
                     Message::from_bytes(self.messageid_message.get(&messageid).unwrap().unwrap())

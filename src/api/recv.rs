@@ -40,6 +40,25 @@ pub async fn recv(
         .ok_or(Error::BadRequest("Wrong since."))?;
     tracing::debug!("tuple: {:?}", tuple);
 
+    if tuple.1 != since && tuple.0.len() == 0 {
+        tracing::error!("recv error");
+        let tuple = services()
+            .handler
+            .recv_message(&user, "0")?
+            .ok_or(Error::BadRequest("Wrong since."))?;
+        for msg in tuple.0 {
+            tracing::error!("{:?}", msg)
+        }
+        tracing::error!("since 1");
+        let tuple = services()
+            .handler
+            .recv_message(&user, "1")?
+            .ok_or(Error::BadRequest("Wrong since."))?;
+        for msg in tuple.0 {
+            tracing::error!("{:?}", msg)
+        }
+    }
+
     Ok(Json(Response {
         next_since: tuple.1,
         messages: tuple.0,

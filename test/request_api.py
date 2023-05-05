@@ -109,6 +109,35 @@ def test_http():
     assert user0_messages[2]['content'] == "message1 ", "user0 get message content failed"
     assert user0_messages[3]['content'] == "message2 ", "user0 get message content failed"
 
+    result = recv_message(user0_token, user0_next_since)
+    (user0_next_since,
+     user0_messages) = result['next_since'], result['messages']
+    assert user0_next_since == "4", "user0 get next_since failed"
+    assert len(user0_messages) == 0, "user0 get message size failed"
+
+    # since to 12
+    for i in range(10):
+        send_message(user0_token, user0, user1, "messagetest"+str(i))
+
+    result = recv_message(user1_token, user1_next_since)
+    (user1_next_since,
+     user1_messages) = result['next_since'], result['messages']
+    # next
+    result = recv_message(user1_token, user1_next_since)
+    (user1_next_since,
+     user1_messages) = result['next_since'], result['messages']
+    assert user1_next_since == "14", "user0 get next_since failed"
+    assert len(user1_messages) == 0, "user0 get message size failed"
+
+    # send then recv
+    send_message(user1_token, user1, user0, "send then recv")
+    result = recv_message(user1_token, user1_next_since)
+    (user1_next_since,
+     user1_messages) = result['next_since'], result['messages']
+    assert user1_next_since == "15", "user0 get next_since failed"
+    assert len(user1_messages) == 1, "user0 get message size failed"
+    assert user1_messages[0]['content'] == "send then recv"
+
     # get all users
     # from user0 token
     users = get_users(user0_token)["users"]

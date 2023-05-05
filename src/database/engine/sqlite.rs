@@ -30,6 +30,7 @@ impl Engine {
         let con = Connection::open(path)?;
         // con.pragma_update(Some(Main), "page_size", 2048)?;
         con.pragma_update(Some(Main), "synchronous", "NORMAL")?;
+        con.pragma_update(Some(Main), "cache_size", 0)?;
         Ok(con)
     }
 
@@ -37,9 +38,6 @@ impl Engine {
         self.connect.lock()
     }
 
-    // fn read_lock(&self) -> MutexGuard<'_, Connection> {
-    //     self.read_connect.lock()
-    // }
     fn read_lock(&self) -> &Connection {
         self.read_connect
             .get_or(|| Engine::pre_open(&self.path).unwrap())
