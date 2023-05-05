@@ -14,7 +14,7 @@ pub struct Response {
 
 pub async fn get_users(AuthBearer(token): AuthBearer) -> Result<Json<Response>> {
     tracing::info!("token: {:?}", token);
-    services()
+    let user = services()
         .handler
         .from_token(token)?
         .ok_or(Error::BadRequest("Wrong token."))?;
@@ -22,6 +22,13 @@ pub async fn get_users(AuthBearer(token): AuthBearer) -> Result<Json<Response>> 
     tracing::debug!("token check ok");
 
     Ok(Json(Response {
-        users: services().handler.users()?,
+        users: services()
+            .handler
+            // get all user
+            .users()?
+            // without current user
+            .into_iter()
+            .filter(|name| name != &user)
+            .collect(),
     }))
 }

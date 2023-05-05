@@ -112,14 +112,12 @@ def test_http():
     # get all users
     # from user0 token
     users = get_users(user0_token)["users"]
-    assert len(users) == 2, "get all users number failed"
-    assert users[0] == user0, "get all users username failed"
-    assert users[1] == user1, "get all users username failed"
+    assert len(users) == 1, "get all users number failed"
+    assert users[0] == user1, "get all users username failed"
     # from user1 token
     users = get_users(user1_token)["users"]
-    assert len(users) == 2, "get all users number failed"
+    assert len(users) == 1, "get all users number failed"
     assert users[0] == user0, "get all users username failed"
-    assert users[1] == user1, "get all users username failed"
 
     # check response error
     response = login("user2", "arst")
