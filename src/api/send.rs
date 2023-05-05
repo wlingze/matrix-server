@@ -15,8 +15,8 @@ pub struct Body {
 /// # `POST /api/v0/send`
 ///
 ///  send message
-pub async fn send(AuthBearer(token): AuthBearer, Json(body): Json<Body>) -> Result<()> {
-    tracing::info!("token: {:?}, message: {:?}", token, body.message);
+pub async fn send(AuthBearer(token): AuthBearer, Json(Body { message }): Json<Body>) -> Result<()> {
+    tracing::info!("token: {:?}, message: {:?}", token, message);
 
     // check user by token
     let user = services()
@@ -24,9 +24,9 @@ pub async fn send(AuthBearer(token): AuthBearer, Json(body): Json<Body>) -> Resu
         .from_token(token)?
         .ok_or(Error::BadRequest("Wrong token."))?;
 
-    tracing::debug!("user-from-token: {:?}, message: {:?}", user, body.message);
-    if user == body.message.send {
-        services().handler.send_message(body.message)?;
+    tracing::debug!("user-from-token: {:?}, message: {:?}", user, message);
+    if user == message.send {
+        services().handler.send_message(message)?;
         Ok(())
     } else {
         Err(Error::BadRequest("Wrong user."))

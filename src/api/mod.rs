@@ -8,6 +8,6 @@ pub mod send;
 pub mod user;
 
 /// GET "/ping"
-pub async fn ping(body: String) -> &'static str {
+pub async fn ping() -> &'static str {
     "pong"
 }

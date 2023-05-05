@@ -17,15 +17,17 @@ pub struct Response {
 ///
 /// register an account on this server
 ///
-pub async fn register_route(Json(body): Json<Body>) -> Result<Json<Response>> {
+pub async fn register_route(
+    Json(Body { username, password }): Json<Body>,
+) -> Result<Json<Response>> {
     // create user
     // set user-password
     services()
         .handler
-        .set_password(&body.username, body.password.as_deref())?;
+        .set_password(&username, password.as_deref())?;
 
     // set token
-    let token = services().handler.set_token(&body.username)?;
+    let token = services().handler.set_token(&username)?;
 
     // return
     Ok(Json(Response { token }))

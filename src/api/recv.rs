@@ -21,8 +21,11 @@ pub struct Response {
 /// # `POST /api/v0/sync`
 ///
 ///  send message
-pub async fn recv(AuthBearer(token): AuthBearer, Json(body): Json<Body>) -> Result<Json<Response>> {
-    tracing::info!("token: {:?}, since: {:?}, ", token, body.since);
+pub async fn recv(
+    AuthBearer(token): AuthBearer,
+    Json(Body { since }): Json<Body>,
+) -> Result<Json<Response>> {
+    tracing::info!("token: {:?}, since: {:?}, ", token, since);
 
     // parse UserId
     let user = services()
@@ -33,7 +36,7 @@ pub async fn recv(AuthBearer(token): AuthBearer, Json(body): Json<Body>) -> Resu
 
     let tuple = services()
         .handler
-        .recv_message(&user, &body.since)?
+        .recv_message(&user, &since)?
         .ok_or(Error::BadRequest("Wrong since."))?;
     tracing::debug!("tuple: {:?}", tuple);
 
