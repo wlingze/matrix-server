@@ -93,4 +93,5 @@ fn routes() -> Router {
         .route("/api/v0/login", post(api::login::login_route))
         .route("/api/v0/send", post(api::send::send))
         .route("/api/v0/recv", post(api::recv::recv))
+        .route("/api/v0/check", post(api::check::check_token))
 }
