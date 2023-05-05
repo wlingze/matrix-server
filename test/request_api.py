@@ -1,3 +1,4 @@
+import traceback
 import requests
 import time
 import subprocess
@@ -200,6 +201,9 @@ def main():
         print("connection error")
     except AssertionError as e:
         print("assert error:", e)
+    except Exception as e: 
+        tb = traceback.format_exc()
+        print(f"python running error : {e}\n{tb}")
 
     print("close server")
     while process.poll() is None:
