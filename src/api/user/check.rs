@@ -2,7 +2,7 @@ use axum::Json;
 use axum_auth::AuthBearer;
 use serde::Deserialize;
 
-use crate::{service::services, utility::error::Result};
+use crate::{api::token_check, utility::error::Result};
 
 #[derive(Deserialize)]
 pub struct Body {
@@ -12,14 +12,8 @@ pub struct Body {
 pub async fn check_token(
     AuthBearer(token): AuthBearer,
     Json(Body { name }): Json<Body>,
-) -> Result<Json<bool>> {
+) -> Result<()> {
     // check user by token
     tracing::info!("token: {:?}", token);
-    Ok(Json(
-        services()
-            .handler
-            .from_token(token)?
-            .map(|user| user == name)
-            .unwrap_or(false),
-    ))
+    token_check(token, name)
 }

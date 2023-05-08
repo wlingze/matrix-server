@@ -20,20 +20,20 @@ pub struct Response {
 ///
 /// login in this server
 ///
-pub async fn login_route(Json(body): Json<Body>) -> Result<Json<Response>> {
+pub async fn login_route(Json(Body { username, password }): Json<Body>) -> Result<Json<Response>> {
     // get password and check user exists
     let hash = services()
         .handler
-        .get_password(&body.username)?
+        .get_password(&username)?
         .ok_or(Error::BadRequest("Wrong username."))?;
 
     // check password
-    if !argon2::verify_encoded(&hash, body.password.as_bytes()).unwrap_or(false) {
+    if !argon2::verify_encoded(&hash, password.as_bytes()).unwrap_or(false) {
         return Err(Error::BadRequest("Wrong password."));
     }
 
     // return
     Ok(Json(Response {
-        token: services().handler.set_token(&body.username)?,
+        token: services().handler.set_token(&username)?,
     }))
 }

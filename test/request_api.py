@@ -88,8 +88,10 @@ def test_http():
 
     user0_token = login("user0", "password")['token']
     # check old token
-    user0_older_token_checked = check(user0, user0_token_older)
-    assert user0_older_token_checked == False, "user token check failed"
+    check_response = check(user0, user0_token_older)
+    assert check_response.status_code == 400, "user token check failed"
+    assert check_response.text == "Wrong token.", "user token check failed"
+    # print("response :", check_response.status_code, check_response.text)
 
     # user0 -> user1
     # the message: {"send": "user0", "recv": "user1", "content": "hello"}

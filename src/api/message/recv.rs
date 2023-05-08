@@ -3,6 +3,7 @@ use axum_auth::AuthBearer;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    api::get_user_from_token,
     service::{message::Message, services},
     utility::error::{Error, Result},
 };
@@ -28,19 +29,17 @@ pub async fn recv(
     tracing::info!("token: {:?}, since: {:?}, ", token, since);
 
     // parse UserId
-    let user = services()
-        .handler
-        .from_token(token)?
-        .ok_or(Error::BadRequest("Wrong token."))?;
+    let user = get_user_from_token(token)?;
     tracing::info!("user: {:?}", user);
 
-    let tuple = services()
+    let (messages, next_since) = services()
         .handler
         .recv_message(&user, &since)?
         .ok_or(Error::BadRequest("Wrong since."))?;
-    tracing::info!("tuple: {:?}", tuple);
+    tracing::info!("tuple: {:?}", next_since);
 
-    if (tuple.1 != since && tuple.0.len() == 0) || (tuple.1 == since && tuple.0.len() != 0) {
+    if (next_since != since && messages.len() == 0) || (next_since == since && messages.len() != 0)
+    {
         tracing::error!("recv error");
         let tuple = services()
             .handler
@@ -60,7 +59,7 @@ pub async fn recv(
     }
 
     Ok(Json(Response {
-        next_since: tuple.1,
-        messages: tuple.0,
+        next_since,
+        messages,
     }))
 }

@@ -2,10 +2,7 @@ use axum::Json;
 use axum_auth::AuthBearer;
 use serde::Serialize;
 
-use crate::{
-    service::services,
-    utility::error::{Error, Result},
-};
+use crate::{api::get_user_from_token, service::services, utility::error::Result};
 
 #[derive(Serialize)]
 pub struct Response {
@@ -14,10 +11,7 @@ pub struct Response {
 
 pub async fn get_users(AuthBearer(token): AuthBearer) -> Result<Json<Response>> {
     tracing::info!("token: {:?}", token);
-    let user = services()
-        .handler
-        .from_token(token)?
-        .ok_or(Error::BadRequest("Wrong token."))?;
+    let user = get_user_from_token(token)?;
 
     tracing::debug!("token check ok");
 

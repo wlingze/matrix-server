@@ -3,6 +3,7 @@ use axum_auth::AuthBearer;
 use serde::Deserialize;
 
 use crate::{
+    api::get_user_from_token,
     service::{message::Message, services},
     utility::error::{Error, Result},
 };
@@ -19,10 +20,7 @@ pub async fn send(AuthBearer(token): AuthBearer, Json(Body { message }): Json<Bo
     tracing::info!("token: {:?}, message: {:?}", token, message);
 
     // check user by token
-    let user = services()
-        .handler
-        .from_token(token)?
-        .ok_or(Error::BadRequest("Wrong token."))?;
+    let user = get_user_from_token(token)?;
 
     tracing::debug!("user-from-token: {:?}, message: {:?}", user, message);
     if user == message.send {
