@@ -74,25 +74,52 @@ def get_users(token):
     return request(api, token=token)
 
 
+# two user
+user0 = "user0"
+user1 = "user1"
+user0_token = ""
+user1_token = ""
+
+
 def test_http():
     ping()
-    # two user
-    user0 = "user0"
-    user1 = "user1"
+    # user control
+    test_user_control()
+    # message
+    test_send_message()
+    # user
+    test_get_users()
+
+
+def test_user_control():
+    global user1_token
+    global user0_token
+
+    # register
     user0_token_older = register(user0, "password")['token']
     user1_token = register(user1, "password")['token']
-    # re-register
+
+    # re-register check
     response = register(user1, "password")
     assert response.status_code == 400, "user re-register check"
     assert response.text == "this user is exists"
 
-    user0_token = login("user0", "password")['token']
+    # login
+    user0_token = login(user0, "password")['token']
+
+    # login faild
+    response = login("user2", "arst")
+    assert response.status_code == 400, "user2 login error check failed"
+    assert response.text == "Wrong username.", "user2 login error check failed"
+
     # check old token
     check_response = check(user0, user0_token_older)
     assert check_response.status_code == 400, "user token check failed"
     assert check_response.text == "Wrong token.", "user token check failed"
     # print("response :", check_response.status_code, check_response.text)
 
+
+def test_send_message():
     # user0 -> user1
     # the message: {"send": "user0", "recv": "user1", "content": "hello"}
     send_message(user0_token, user0, user1, "hellow")
@@ -148,6 +175,8 @@ def test_http():
     assert len(user1_messages) == 1, "user0 get message size failed"
     assert user1_messages[0]['content'] == "send then recv"
 
+
+def test_get_users():
     # get all users
     # from user0 token
     users = get_users(user0_token)["users"]
@@ -157,11 +186,6 @@ def test_http():
     users = get_users(user1_token)["users"]
     assert len(users) == 1, "get all users number failed"
     assert users[0] == user0, "get all users username failed"
-
-    # check response error
-    response = login("user2", "arst")
-    assert response.status_code == 400, "user2 login error check failed"
-    assert response.text == "Wrong username.", "user2 login error check failed"
 
 
 def run_server(database_tmp_directory):
