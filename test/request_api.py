@@ -36,9 +36,11 @@ def ping():
     response = requests.get(api)
     print("ping result:", response.text)
 
-def check(user, token): 
+
+def check(user, token):
     api = url + "/api/v0/check"
-    return request(api, json={"name" :user}, token=token)
+    return request(api, json={"name": user}, token=token)
+
 
 def register(username, password):
     api = url + "/api/v0/register"
@@ -79,10 +81,15 @@ def test_http():
     user1 = "user1"
     user0_token_older = register(user0, "password")['token']
     user1_token = register(user1, "password")['token']
+    # re-register
+    response = register(user1, "password")
+    assert response.status_code == 400, "user re-register check"
+    assert response.text == "this user is exists"
+
     user0_token = login("user0", "password")['token']
+    # check old token
     user0_older_token_checked = check(user0, user0_token_older)
-    # print("user0 older token check: ", user0_older_token_checked)
-    assert user0_older_token_checked==False, "user token check failed"
+    assert user0_older_token_checked == False, "user token check failed"
 
     # user0 -> user1
     # the message: {"send": "user0", "recv": "user1", "content": "hello"}
@@ -201,7 +208,7 @@ def main():
         print("connection error")
     except AssertionError as e:
         print("assert error:", e)
-    except Exception as e: 
+    except Exception as e:
         tb = traceback.format_exc()
         print(f"python running error : {e}\n{tb}")
 

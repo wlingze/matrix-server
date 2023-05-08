@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{service::services, utility::error::Result};
+use crate::{
+    service::services,
+    utility::error::{Error, Result},
+};
 use axum::extract::Json;
 
 #[derive(Deserialize)]
@@ -20,6 +23,12 @@ pub struct Response {
 pub async fn register_route(
     Json(Body { username, password }): Json<Body>,
 ) -> Result<Json<Response>> {
+    // check user exits
+    match services().handler.exists(&username) {
+        Ok(false) => Ok(()),
+        Ok(true) => Err(Error::BadRequest("this user is exists")),
+        Err(err) => Err(err),
+    }?;
     // create user
     // set user-password
     services()
