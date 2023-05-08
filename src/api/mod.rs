@@ -1,11 +1,8 @@
 // api mod
 // this part handle the api request to response.
 
-pub mod check;
-pub mod login;
-pub mod recv;
-pub mod register;
-pub mod send;
+pub mod key;
+pub mod message;
 pub mod user;
 
 /// GET "/ping"

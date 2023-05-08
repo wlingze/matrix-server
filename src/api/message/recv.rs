@@ -32,15 +32,15 @@ pub async fn recv(
         .handler
         .from_token(token)?
         .ok_or(Error::BadRequest("Wrong token."))?;
-    tracing::debug!("user: {:?}", user);
+    tracing::info!("user: {:?}", user);
 
     let tuple = services()
         .handler
         .recv_message(&user, &since)?
         .ok_or(Error::BadRequest("Wrong since."))?;
-    tracing::debug!("tuple: {:?}", tuple);
+    tracing::info!("tuple: {:?}", tuple);
 
-    if tuple.1 != since && tuple.0.len() == 0 {
+    if (tuple.1 != since && tuple.0.len() == 0) || (tuple.1 == since && tuple.0.len() != 0) {
         tracing::error!("recv error");
         let tuple = services()
             .handler

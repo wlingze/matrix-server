@@ -88,10 +88,13 @@ async fn run_server() -> io::Result<()> {
 fn routes() -> Router {
     Router::new()
         .route("/ping", get(api::ping))
-        .route("/api/v0/get_users", get(api::user::get_users))
-        .route("/api/v0/register", post(api::register::register_route))
-        .route("/api/v0/login", post(api::login::login_route))
-        .route("/api/v0/send", post(api::send::send))
-        .route("/api/v0/recv", post(api::recv::recv))
-        .route("/api/v0/check", post(api::check::check_token))
+        .route("/api/v0/get_users", get(api::user::users::get_users))
+        .route(
+            "/api/v0/register",
+            post(api::user::register::register_route),
+        )
+        .route("/api/v0/check", post(api::user::check::check_token))
+        .route("/api/v0/login", post(api::user::login::login_route))
+        .route("/api/v0/send", post(api::message::send::send))
+        .route("/api/v0/recv", post(api::message::recv::recv))
 }
