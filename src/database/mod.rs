@@ -32,6 +32,7 @@ pub fn build_database(config: Config) -> Result<Box<Database>> {
         user_count: build.open_tree("user_count")?,
         user_messageid: build.open_tree("user_messageid")?,
         messageid_message: build.open_tree("messageid_message")?,
+        user_key: build.open_tree("user_key")?,
     }))
 }
 
@@ -48,6 +49,9 @@ pub struct Database {
     pub user_messageid: Arc<dyn KV>,
     // messageid - message
     pub messageid_message: Arc<dyn KV>,
+
+    // public key
+    pub user_key: Arc<dyn KV>,
 }
 
 impl Handler for Database {}

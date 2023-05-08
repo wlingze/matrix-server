@@ -14,7 +14,7 @@ url = "http://" + host + ":" + port
 def request(path, json="", token="", ret=True):
     headers = {}
     if token != "":
-        print(token)
+        # print(token)
         headers = {'Authorization': 'Bearer ' + token}
     response = None
     if json != "":
@@ -22,8 +22,8 @@ def request(path, json="", token="", ret=True):
     else:
         response = requests.get(path, headers=headers)
 
-    print("{} status: {} result: {}".format(
-        path, response.status_code, response.text))
+    # print("{} status: {} result: {}".format(
+    #     path, response.status_code, response.text))
 
     if response.status_code == 200 and ret:
         return response.json()
@@ -74,6 +74,16 @@ def get_users(token):
     return request(api, token=token)
 
 
+def send_key(key, token):
+    api = url + "/api/v0/send_key"
+    return request(api, json={"public_key": key}, token=token, ret=False)
+
+
+def get_key(name, token):
+    api = url+"/api/v0/get_key"
+    return request(api, json={"username": name}, token=token)
+
+
 # two user
 user0 = "user0"
 user1 = "user1"
@@ -83,12 +93,14 @@ user1_token = ""
 
 def test_http():
     ping()
-    # user control
+    # # user control
     test_user_control()
-    # message
+    # # message
     test_send_message()
-    # user
+    # # user
     test_get_users()
+    # key
+    test_key()
 
 
 def test_user_control():
@@ -116,7 +128,6 @@ def test_user_control():
     check_response = check(user0, user0_token_older)
     assert check_response.status_code == 400, "user token check failed"
     assert check_response.text == "Wrong token.", "user token check failed"
-    # print("response :", check_response.status_code, check_response.text)
 
 
 def test_send_message():
@@ -186,6 +197,21 @@ def test_get_users():
     users = get_users(user1_token)["users"]
     assert len(users) == 1, "get all users number failed"
     assert users[0] == user0, "get all users username failed"
+
+
+def test_key():
+    # send user0 key
+    user0_key = [1, 2, 3, 4, 5, 6]
+    res = send_key(user0_key, user0_token)
+    assert res.status_code == 200, "send key test"
+
+    # send user1 key
+    user1_key = [6, 5, 4, 3, 2, 1]
+    res = send_key(user1_key, user1_token)
+    assert res.status_code == 200, "send key test"
+
+    ret_key = get_key(user0, user1_token)["public_key"]
+    assert ret_key == user0_key, "get key test"
 
 
 def run_server(database_tmp_directory):
