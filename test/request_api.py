@@ -39,7 +39,7 @@ def ping():
 
 def check(user, token):
     api = url + "/api/v0/check"
-    return request(api, json={"name": user}, token=token)
+    return request(api, json={"name": user}, token=token, ret=False)
 
 
 def register(username, password):
@@ -128,6 +128,9 @@ def test_user_control():
     check_response = check(user0, user0_token_older)
     assert check_response.status_code == 400, "user token check failed"
     assert check_response.text == "Wrong token.", "user token check failed"
+    # check new token
+    check_response = check(user0, user0_token)
+    assert check_response.status_code == 200, "user token check success"
 
 
 def test_send_message():

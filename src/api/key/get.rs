@@ -22,7 +22,7 @@ pub async fn get_key(
     AuthBearer(token): AuthBearer,
     Json(Body { username }): Json<Body>,
 ) -> Result<Json<Response>> {
-    token_check(token, "".to_string())?;
+    token_check(token, |str| str != "".to_string())?;
 
     Ok(Json(Response {
         public_key: services()

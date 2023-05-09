@@ -1,2 +1,2 @@
-pub mod get_key;
-pub mod send_key;
+pub mod get;
+pub mod send;
