@@ -15,5 +15,5 @@ pub async fn check_token(
 ) -> Result<()> {
     // check user by token
     tracing::info!("token: {:?}", token);
-    token_check(token, name)
+    token_check(token, |str| str == name)
 }

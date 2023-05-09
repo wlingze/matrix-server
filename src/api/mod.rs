@@ -15,8 +15,11 @@ pub async fn ping() -> &'static str {
     "pong"
 }
 
-fn token_check(token: String, user: String) -> Result<()> {
-    (get_user_from_token(token)? != user)
+fn token_check<F>(token: String, func: F) -> Result<()>
+where
+    F: Fn(String) -> bool,
+{
+    func(get_user_from_token(token)?)
         .then_some(())
         .ok_or(Error::BadRequest("Wrong token."))
 }
