@@ -45,10 +45,13 @@ pub mod test {
         service::{init_service, services},
     };
 
-    use super::{message::test::test_message, user::tests::test_user};
+    use super::{
+        message::test::test_message_handler, message_state::test::test_message_state,
+        user::tests::test_user,
+    };
 
-    #[test]
-    fn test_global_services() {
+    #[tokio::test]
+    async fn test_global_services() {
         let mut config = default();
         let tmp_dir = "/tmp/test_services";
         create_dir(tmp_dir.clone()).map_err(|_| {
@@ -79,7 +82,8 @@ pub mod test {
 
         // test message
         {
-            test_message();
+            test_message_handler();
+            test_message_state().await;
         }
 
         // delete

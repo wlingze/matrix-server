@@ -35,9 +35,8 @@ pub mod test {
     use crate::service::{message::Message, services};
 
     // #[test]
-    pub fn test_message() {
+    pub fn test_message_handler() {
         // setup
-        // let tmp_dir = setup_services("test_user");
 
         // message 1
         {
