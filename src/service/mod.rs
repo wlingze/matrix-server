@@ -5,6 +5,7 @@
 
 // sub-module
 pub mod message;
+pub mod message_state;
 pub mod services;
 pub mod user;
 
