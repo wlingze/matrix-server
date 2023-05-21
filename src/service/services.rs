@@ -1,10 +1,8 @@
 use crate::{config::Config, utility::error::Result};
 
-use crate::service::user;
+use super::{key, message, user};
 
-use super::message;
-
-pub trait Handler: user::Handler + message::Handler {}
+pub trait Handler: user::Handler + message::Handler + key::Handler {}
 
 pub struct Services {
     pub config: Config,
