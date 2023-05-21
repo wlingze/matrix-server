@@ -168,7 +168,7 @@ impl KV for Table {
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
     use std::fs::{create_dir, remove_dir_all};
 
     use crate::config;
