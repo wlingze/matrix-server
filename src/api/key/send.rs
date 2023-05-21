@@ -7,7 +7,7 @@ use crate::{api::get_user_from_token, service::services, utility::error::Result}
 
 #[derive(Deserialize)]
 pub struct Body {
-    public_key: Vec<u8>,
+    pub public_key: Vec<u8>,
 }
 
 pub async fn send_key(

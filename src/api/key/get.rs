@@ -10,12 +10,12 @@ use crate::{
 
 #[derive(Deserialize)]
 pub struct Body {
-    username: String,
+    pub username: String,
 }
 
 #[derive(Serialize)]
 pub struct Response {
-    public_key: Vec<u8>,
+    pub public_key: Vec<u8>,
 }
 
 pub async fn get_key(
